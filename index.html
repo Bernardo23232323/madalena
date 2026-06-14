@@ -1273,7 +1273,7 @@ function renderSpaceSummary(sp){
   if(!re.children.length)re.innerHTML='<div class="empty">Nenhuma tarefa pendente no período</div>';
 }
 
-ffunction renderDynamicPages(){
+function renderDynamicPages(){
   const container=document.getElementById('dynamic-pages');container.innerHTML='';
   S.spaces.forEach(sp=>{
     // Somente o space Pessoal (id='personal') exibe o botão de novo hábito
