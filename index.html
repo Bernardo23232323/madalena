@@ -1256,15 +1256,24 @@ function renderSpaceSummary(sp){
       <div class="space-mcard"><div style="font-size:10px;color:var(--txt3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Atrasadas</div><div style="font-size:22px;font-weight:500;color:#E24B4A;font-family:'DM Serif Display',serif">${overdue}</div></div>
     </div>
   </div>
-  <div class="section-title">Listas</div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:22px" id="slg-${sp.id}"></div>
   <div class="section-title">Tarefas pendentes</div>
-  <div id="srt-${sp.id}" class="task-list"></div>`;
-  const lg=document.getElementById('slg-'+sp.id);(sp.lists||[]).forEach(lst=>{const lt=filteredTasks.filter(t=>t.listId===lst.id);const ld=lt.filter(t=>t.done).length;const lpct=lt.length?Math.round(ld/lt.length*100):0;const card=document.createElement('div');card.className='space-list-card';card.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="font-size:13px;font-weight:500;color:var(--txt1);display:flex;align-items:center;gap:6px"><i class="ti ti-list" style="font-size:13px;color:${sp.color}"></i>${lst.label}</div><span style="font-size:11px;color:var(--txt3)">${lt.length} tarefa${lt.length!==1?'s':''}</span></div><div class="pbar"><div class="pfill" style="width:${lpct}%;background:${sp.color}"></div></div><div style="font-size:11px;color:var(--txt3);margin-top:5px">${ld}/${lt.length} concluídas</div>`;card.addEventListener('click',()=>sv(lst.id));lg.appendChild(card);});
-  const re=document.getElementById('srt-'+sp.id);const rp=filteredTasks.filter(t=>!t.done).sort((a,b)=>(a.deadline||'z').localeCompare(b.deadline||'z')).slice(0,6);const rr=allRecur.filter(r=>!S.recurringDoneLog[rDoneKey(r.tpl.id,r.date)]).slice(0,3);if(!rp.length&&!rr.length){re.innerHTML='<div class="empty">Nenhuma tarefa pendente no período</div>';return;}rp.forEach(t=>re.appendChild(makeTaskRow(t,false)));rr.forEach(r=>re.appendChild(makeRecRow(r.tpl,r.date,false)));
+  <div id="srt-${sp.id}"></div>`;
+  const re=document.getElementById('srt-'+sp.id);
+  (sp.lists||[]).forEach(lst=>{
+    const lp=filteredTasks.filter(t=>t.listId===lst.id&&!t.done).sort((a,b)=>(a.deadline||'z').localeCompare(b.deadline||'z'));
+    const lr=allRecur.filter(r=>r.tpl.listId===lst.id&&!S.recurringDoneLog[rDoneKey(r.tpl.id,r.date)]);
+    if(!lp.length&&!lr.length)return;
+    const sec=document.createElement('div');sec.style.cssText='margin-bottom:18px';
+    sec.innerHTML=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;cursor:pointer" onclick="sv('${lst.id}')"><i class="ti ti-list" style="font-size:12px;color:${sp.color}"></i><span style="font-size:12px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em">${lst.label}</span><span style="font-size:11px;color:var(--txt3);margin-left:4px">${lp.length+lr.length}</span></div>`;
+    const ul=document.createElement('div');ul.className='task-list';
+    lp.forEach(t=>ul.appendChild(makeTaskRow(t,false)));
+    lr.forEach(r=>ul.appendChild(makeRecRow(r.tpl,r.date,false)));
+    sec.appendChild(ul);re.appendChild(sec);
+  });
+  if(!re.children.length)re.innerHTML='<div class="empty">Nenhuma tarefa pendente no período</div>';
 }
 
-function renderDynamicPages(){
+ffunction renderDynamicPages(){
   const container=document.getElementById('dynamic-pages');container.innerHTML='';
   S.spaces.forEach(sp=>{
     // Somente o space Pessoal (id='personal') exibe o botão de novo hábito
