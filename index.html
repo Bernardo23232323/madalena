@@ -5,6 +5,7 @@
 <title>Madalena</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
 
@@ -1736,40 +1737,106 @@ document.addEventListener('click',e=>{
 })();
 
 /* ══════════════════════════════════
-   AGENDA — GOOGLE CALENDAR
-══════════════════════════════════ */
+
 /* ══════════════════════════════════════
-   AGENDA — GOOGLE CALENDAR
+   AGENDA — GOOGLE CALENDAR (OAuth)
 ══════════════════════════════════════ */
+const GCAL_CLIENT_ID = '715994620828-980him8ss9k8lti7gi8230g7r986gqtd.apps.googleusercontent.com';
+const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+const GCAL_TOKEN_KEY = 'madalena-gcal-token';
+let _gcalToken = null;
 let _agendaOffset = 0;
 
+/* ── Token ── */
+function gcalLoadToken() {
+  try { const t = JSON.parse(localStorage.getItem(GCAL_TOKEN_KEY)); if (t && t.expires > Date.now()) { _gcalToken = t.access_token; return true; } } catch(e){}
+  _gcalToken = null; return false;
+}
+function gcalSaveToken(token, expiresIn) {
+  const t = { access_token: token, expires: Date.now() + (expiresIn - 60) * 1000 };
+  localStorage.setItem(GCAL_TOKEN_KEY, JSON.stringify(t));
+  _gcalToken = token;
+}
+function gcalClearToken() {
+  localStorage.removeItem(GCAL_TOKEN_KEY);
+  _gcalToken = null;
+}
+
+/* ── OAuth popup ── */
+function gcalConnect() {
+  return new Promise((resolve, reject) => {
+    if (!window.google) { reject(new Error('GIS não carregado')); return; }
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: GCAL_CLIENT_ID,
+      scope: GCAL_SCOPE,
+      callback: (resp) => {
+        if (resp.error) { reject(new Error(resp.error)); return; }
+        gcalSaveToken(resp.access_token, resp.expires_in);
+        resolve(resp.access_token);
+      }
+    });
+    client.requestAccessToken({ prompt: 'consent' });
+  });
+}
+
+/* ── Helpers de data ── */
 function agendaNav(dir, mode) {
   if (mode === 'today') _agendaOffset = 0;
   else _agendaOffset += dir;
   loadAgenda();
 }
-
 function agendaIsoDay(offset) {
-  const d = new Date();
-  d.setDate(d.getDate() + offset);
+  const d = new Date(); d.setDate(d.getDate() + offset);
   return d.toISOString().slice(0, 10);
 }
-
 function agendaLabel(offset) {
-  const d = new Date();
-  d.setDate(d.getDate() + offset);
+  const d = new Date(); d.setDate(d.getDate() + offset);
   if (offset === 0) return 'Hoje';
   if (offset === 1) return 'Amanhã';
   if (offset === -1) return 'Ontem';
-  return d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' });
+  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' });
 }
-
 function agendaFmtTime(dt) {
   if (!dt) return 'Dia todo';
-  const d = new Date(dt);
-  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  return new Date(dt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
+/* ── Render eventos ── */
+function agendaRenderEvents(events) {
+  const el = document.getElementById('agenda-events'); if (!el) return;
+  if (!events.length) {
+    el.innerHTML = `<div style="padding:24px;text-align:center;color:var(--txt3);font-size:13px;border:1px solid var(--bdr);border-radius:10px">
+      <i class="ti ti-calendar-off" style="font-size:22px;display:block;margin:0 auto 8px;opacity:.4"></i>
+      Nenhum evento para ${agendaLabel(_agendaOffset).toLowerCase()}
+    </div>`; return;
+  }
+  events.sort((a,b) => (a.start?.dateTime||a.start?.date||'').localeCompare(b.start?.dateTime||b.start?.date||''));
+  const colors = ['#378ADD','#1D9E75','#D85A30','#7c6fcd','#D4537E','#BA7517','#639922'];
+  el.innerHTML = '';
+  events.forEach((ev, i) => {
+    const allDay = !ev.start?.dateTime;
+    const startT = allDay ? 'Dia todo' : agendaFmtTime(ev.start.dateTime);
+    const endT = ev.end?.dateTime ? agendaFmtTime(ev.end.dateTime) : '';
+    const timeStr = endT ? `${startT} – ${endT}` : startT;
+    const color = ev.color || colors[i % colors.length];
+    const div = document.createElement('div');
+    div.className = 'agenda-evt';
+    div.innerHTML = `
+      <span class="agenda-dot" style="background:${color};margin-top:5px"></span>
+      <div style="flex:1;min-width:0">
+        <div class="agenda-evt-title">${ev.summary || '(Sem título)'}</div>
+        ${ev.location ? `<div class="agenda-evt-sub"><i class="ti ti-map-pin" style="font-size:10px;vertical-align:-1px;margin-right:3px"></i>${ev.location.slice(0,60)}</div>` : ''}
+        ${ev.description ? `<div class="agenda-evt-sub">${ev.description.replace(/<[^>]*>/g,'').slice(0,80)}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+        <span class="agenda-evt-time">${timeStr}</span>
+        ${ev.htmlLink ? `<a href="${ev.htmlLink}" target="_blank" style="font-size:10px;color:var(--txt3);text-decoration:none" title="Abrir no Google Agenda"><i class="ti ti-external-link" style="font-size:11px"></i></a>` : ''}
+      </div>`;
+    el.appendChild(div);
+  });
+}
+
+/* ── Carrega eventos da API ── */
 async function loadAgenda() {
   if (S.currentView !== 'agenda') return;
   const el = document.getElementById('agenda-events');
@@ -1780,77 +1847,49 @@ async function loadAgenda() {
   const iso = agendaIsoDay(_agendaOffset);
   if (lblEl) lblEl.textContent = agendaLabel(_agendaOffset);
 
-  el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--txt3);font-size:13px"><i class="ti ti-loader" style="font-size:20px;display:block;margin:0 auto 8px;opacity:.5"></i>Carregando…</div>';
-  if (btn) btn.style.pointerEvents = 'none';
+  /* verifica token */
+  gcalLoadToken();
+  if (!_gcalToken) {
+    el.innerHTML = `<div style="padding:32px;text-align:center;border:1px solid var(--bdr);border-radius:12px">
+      <i class="ti ti-brand-google" style="font-size:28px;display:block;margin:0 auto 10px;color:#378ADD;opacity:.8"></i>
+      <div style="font-size:14px;font-weight:500;color:var(--txt1);margin-bottom:6px">Conectar Google Agenda</div>
+      <div style="font-size:12px;color:var(--txt3);margin-bottom:16px">Autorize o acesso para visualizar seus eventos</div>
+      <button class="btn btn-primary" onclick="gcalConnectAndLoad()"><i class="ti ti-link" style="font-size:13px"></i>Conectar</button>
+    </div>`;
+    return;
+  }
 
-  const timeMin = iso + 'T00:00:00-03:00';
-  const timeMax = iso + 'T23:59:59-03:00';
+  el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--txt3);font-size:13px"><i class="ti ti-loader" style="font-size:20px;display:block;margin:0 auto 8px;opacity:.5;animation:spin 1s linear infinite"></i>Carregando…</div>';
+  if (btn) btn.disabled = true;
+
+  const timeMin = encodeURIComponent(iso + 'T00:00:00-03:00');
+  const timeMax = encodeURIComponent(iso + 'T23:59:59-03:00');
+  const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=50`;
 
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        mcp_servers: [{ type: 'url', url: 'https://calendarmcp.googleapis.com/mcp/v1', name: 'google-calendar' }],
-        messages: [{
-          role: 'user',
-          content: `Liste os eventos do Google Calendar para ${iso}. Use list_events com startTime="${timeMin}" e endTime="${timeMax}". Responda SOMENTE com JSON válido, sem markdown: {"events":[{"id":"...","summary":"...","start":{"dateTime":"..."},"end":{"dateTime":"..."},"location":"...","description":"...","htmlLink":"..."}]}`
-        }]
-      })
-    });
-
+    const resp = await fetch(url, { headers: { Authorization: `Bearer ${_gcalToken}` } });
+    if (resp.status === 401) { gcalClearToken(); loadAgenda(); return; }
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
-    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-    const clean = text.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
-    const events = parsed.events || [];
-
-    if (btn) btn.style.pointerEvents = '';
-
-    if (!events.length) {
-      el.innerHTML = `<div style="padding:24px;text-align:center;color:var(--txt3);font-size:13px;border:1px solid var(--bdr);border-radius:10px"><i class="ti ti-calendar-off" style="font-size:22px;display:block;margin:0 auto 8px;opacity:.4"></i>Nenhum evento para ${agendaLabel(_agendaOffset).toLowerCase()}</div>`;
-      return;
-    }
-
-    // ordenar por hora
-    events.sort((a, b) => {
-      const ta = a.start?.dateTime || a.start?.date || '';
-      const tb = b.start?.dateTime || b.start?.date || '';
-      return ta.localeCompare(tb);
-    });
-
-    const colors = ['#378ADD','#1D9E75','#D85A30','#7c6fcd','#D4537E','#BA7517','#639922'];
-    el.innerHTML = '';
-    events.forEach((ev, i) => {
-      const startTime = agendaFmtTime(ev.start?.dateTime);
-      const endTime = ev.end?.dateTime ? agendaFmtTime(ev.end.dateTime) : '';
-      const timeStr = endTime ? `${startTime} – ${endTime}` : startTime;
-      const color = colors[i % colors.length];
-      const div = document.createElement('div');
-      div.className = 'agenda-evt';
-      div.innerHTML = `
-        <span class="agenda-dot" style="background:${color};margin-top:5px"></span>
-        <div style="flex:1;min-width:0">
-          <div class="agenda-evt-title">${ev.summary || '(Sem título)'}</div>
-          ${ev.location ? `<div class="agenda-evt-sub"><i class="ti ti-map-pin" style="font-size:10px;vertical-align:-1px;margin-right:3px"></i>${ev.location}</div>` : ''}
-          ${ev.description ? `<div class="agenda-evt-sub">${ev.description.replace(/<[^>]*>/g,'').slice(0,80)}</div>` : ''}
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
-          <span class="agenda-evt-time">${timeStr}</span>
-          ${ev.htmlLink ? `<a href="${ev.htmlLink}" target="_blank" style="font-size:10px;color:var(--txt3);text-decoration:none"><i class="ti ti-external-link" style="font-size:11px"></i></a>` : ''}
-        </div>`;
-      el.appendChild(div);
-    });
-
-  } catch (err) {
-    if (btn) btn.style.pointerEvents = '';
+    if (btn) btn.disabled = false;
+    agendaRenderEvents(data.items || []);
+  } catch(err) {
+    if (btn) btn.disabled = false;
     el.innerHTML = `<div style="padding:24px;text-align:center;color:var(--txt3);font-size:13px;border:1px solid var(--bdr);border-radius:10px">
       <i class="ti ti-calendar-x" style="font-size:22px;display:block;margin:0 auto 8px;opacity:.4"></i>
-      Não foi possível carregar a agenda.<br>
-      <span style="font-size:11px;margin-top:4px;display:block">Verifique se o Google Calendar está conectado.</span>
+      Erro ao carregar agenda.<br><span style="font-size:11px">${err.message}</span><br>
+      <button class="btn" style="margin-top:10px" onclick="gcalClearToken();loadAgenda()">Reconectar</button>
     </div>`;
+  }
+}
+
+async function gcalConnectAndLoad() {
+  try {
+    await gcalConnect();
+    loadAgenda();
+  } catch(err) {
+    const el = document.getElementById('agenda-events');
+    if (el) el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--txt3);font-size:13px">Conexão cancelada. <button class="btn" style="margin-top:8px" onclick="loadAgenda()">Tentar novamente</button></div>`;
   }
 }
 
