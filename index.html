@@ -886,8 +886,9 @@ async function sbSaveList(lst,spaceId,ordem){
 }
 async function sbDeleteList(lid){await sbDelete('listas',lid);}
 async function sbSaveTask(t){
+  const uid=_currentUser?.id;
   await sbUpsert('tarefas',{
-    id:t.id, lista_id:t.listId, titulo:t.title,
+    id:t.id, lista_id:t.listId, titulo:t.title, user_id:uid,
     prioridade:t.prio, status:t.status, concluida:t.done,
     prazo:t.deadline||null, horario:t.time||null,
     ordem_prioridade:t._order??null,
@@ -898,7 +899,7 @@ async function sbSaveTask(t){
 async function sbDeleteTask(tid){await sbDelete('tarefas',tid);}
 async function sbSaveRecur(r){
   await sbUpsert('tarefas_recorrentes',{
-    id:r.id, lista_id:r.listId, titulo:r.title,
+    id:r.id, lista_id:r.listId, titulo:r.title, user_id:_currentUser?.id,
     prioridade:r.prio, ...freqToRow(r.type,r.days),
     criado_em:r.createdAt?new Date(r.createdAt).toISOString():new Date().toISOString()
   });
@@ -906,7 +907,7 @@ async function sbSaveRecur(r){
 async function sbDeleteRecur(rid){await sbDelete('tarefas_recorrentes',rid);}
 async function sbToggleRecurDone(tplId,date,isDone){
   if(isDone){
-    await sb.from('recorrentes_concluidas').upsert({tarefa_recorrente_id:tplId,data:date},{onConflict:'tarefa_recorrente_id,data'});
+    await sb.from('recorrentes_concluidas').upsert({tarefa_recorrente_id:tplId,data:date,user_id:_currentUser?.id},{onConflict:'tarefa_recorrente_id,data'});
   } else {
     await sb.from('recorrentes_concluidas').delete().eq('tarefa_recorrente_id',tplId).eq('data',date);
   }
@@ -914,30 +915,28 @@ async function sbToggleRecurDone(tplId,date,isDone){
 async function sbSaveHabit(h){
   await sbUpsert('habitos',{
     id:h.id, nome:h.name, cor:h.color, meta_mensal:h.meta,
-    user_id:_currentUser?.id,
-    ...freqToRow(h.freq,h.days)
+    user_id:_currentUser?.id, ...freqToRow(h.freq,h.days)
   });
 }
 async function sbDeleteHabit(hid){await sbDelete('habitos',hid);}
 async function sbToggleHabit(hid,date,isDone){
   if(isDone){
-    await sb.from('habitos_concluidos').upsert({habito_id:hid,data:date},{onConflict:'habito_id,data'});
+    await sb.from('habitos_concluidos').upsert({habito_id:hid,data:date,user_id:_currentUser?.id},{onConflict:'habito_id,data'});
   } else {
     await sb.from('habitos_concluidos').delete().eq('habito_id',hid).eq('data',date);
   }
 }
 async function sbSaveTimeSessions(tid,sessions){
-  /* apaga as do dia e reinsere — simples e seguro */
   if(!sessions||!sessions.length)return;
   const last=sessions[sessions.length-1];
   await sb.from('sessoes_tempo').insert({
-    tarefa_id:tid, segundos:last.secs,
+    tarefa_id:tid, segundos:last.secs, user_id:_currentUser?.id,
     iniciado_em:new Date(last.ts-last.secs*1000).toISOString(),
     salvo_em:new Date(last.ts).toISOString()
   });
 }
 async function sbLogPomodoro(tipo='foco',duracao_min=25,tarefa_id=null){
-  await sb.from('pomodoros').insert({tipo,duracao_min,concluido:true,tarefa_id:tarefa_id||null});
+  await sb.from('pomodoros').insert({tipo,duracao_min,concluido:true,tarefa_id:tarefa_id||null,user_id:_currentUser?.id});
 }
 
 /* overlay de loading */
