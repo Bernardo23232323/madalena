@@ -1040,12 +1040,15 @@ function renderSidebar(){
     spItem.innerHTML=`
       <span class="dot" style="background:${sp.color}"></span>
       <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sp.label}</span>
+      <button class="sp-del-btn list-act-btn" title="Excluir space" style="opacity:0;margin-left:2px" onclick="deleteSpace('${sp.id}',event)"><i class="ti ti-trash" style="font-size:11px"></i></button>
       <i class="ti ti-chevron-down sp-chevron"></i>
       <span class="drag-handle" style="margin-left:4px"><i class="ti ti-grip-vertical" style="font-size:13px"></i></span>`;
+    spItem.addEventListener('mouseenter',()=>{const b=spItem.querySelector('.sp-del-btn');if(b)b.style.opacity='1';});
+    spItem.addEventListener('mouseleave',()=>{const b=spItem.querySelector('.sp-del-btn');if(b)b.style.opacity='0';});
 
     // Clicking the space: if collapsed → expand; if expanded → navigate to space overview
     spItem.addEventListener('click',e=>{
-      if(e.target.closest('.drag-handle'))return;
+      if(e.target.closest('.drag-handle')||e.target.closest('.sp-del-btn'))return;
       if(isCollapsed){
         // expand, don't navigate
         S.collapsedSpaces[sp.id]=false;
@@ -1108,6 +1111,35 @@ function renderSidebar(){
 function startEditList(lid,e){e.stopPropagation();S.editingList=lid;renderSidebar();}
 function commitListEdit(spId,lid,val){const name=val.trim();if(name){const sp=S.spaces.find(s=>s.id===spId);if(sp){const l=sp.lists.find(l=>l.id===lid);if(l){l.label=name;sbUpsert('listas',{id:lid,space_id:spId,nome:name,ordem:sp.lists.findIndex(x=>x.id===lid)||0});}}}S.editingList=null;persist();renderAll();}
 let _pendingDeleteSpId=null,_pendingDeleteLid=null;
+let _pendingDeleteSpaceId=null;
+function deleteSpace(spId,e){
+  e.stopPropagation();
+  const sp=S.spaces.find(s=>s.id===spId);if(!sp)return;
+  const taskCount=S.tasks.filter(t=>(sp.lists||[]).some(l=>l.id===t.listId)).length;
+  _pendingDeleteSpaceId=spId;
+  document.getElementById('confirm-title').textContent=`Excluir space "${sp.label}"?`;
+  document.getElementById('confirm-desc').textContent=taskCount>0
+    ?`Este space contém ${taskCount} tarefa${taskCount!==1?'s':''} e todas as listas serão excluídas permanentemente.`
+    :'Todas as listas deste space serão excluídas.';
+  document.getElementById('confirm-btn').onclick=confirmDeleteSpace;
+  document.getElementById('confirm-modal').classList.add('open');
+}
+async function confirmDeleteSpace(){
+  const spId=_pendingDeleteSpaceId;
+  const sp=S.spaces.find(s=>s.id===spId);if(!sp)return;
+  // Remove tarefas e listas do state
+  const lids=(sp.lists||[]).map(l=>l.id);
+  S.tasks=S.tasks.filter(t=>!lids.includes(t.listId));
+  S.recurringTemplates=S.recurringTemplates.filter(r=>!lids.includes(r.listId));
+  S.spaces=S.spaces.filter(s=>s.id!==spId);
+  if(S.currentView===spId||lids.includes(S.currentView))sv('dashboard');
+  _pendingDeleteSpaceId=null;
+  closeConfirmModal();
+  // Deleta no Supabase
+  for(const lid of lids) await sbDelete('listas',lid);
+  await sbDelete('spaces',spId);
+  persist();renderAll();
+}
 function deleteList(spId,lid,e){
   e.stopPropagation();
   const sp=S.spaces.find(s=>s.id===spId);if(!sp||sp.lists.length<=1)return;
@@ -1941,6 +1973,7 @@ window.doLogin = doLogin;
 window.criarUsuario = criarUsuario;
 window.toggleUserAtivo = toggleUserAtivo;
 window.closeUserPanel = closeUserPanel;
+window.deleteSpace = deleteSpace;
 </script>
 </body>
 </html>
