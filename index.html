@@ -1657,14 +1657,18 @@ async function doLogin(){
   if(!usuario||!senha){errEl.textContent='Preencha usuário e senha.';return;}
   btn.innerHTML='<span class="auth-spinner"></span>Entrando…';btn.disabled=true;errEl.textContent='';
   try{
-    // Busca o email do usuário pela tabela usuarios
-    const{data:uData,error:uErr}=await sb.from('usuarios').select('id,usuario,nome,email,role,ativo').eq('usuario',usuario).single();
-    if(uErr||!uData){errEl.textContent='Usuário ou senha incorretos.';btn.innerHTML='Entrar';btn.disabled=false;return;}
-    if(!uData.ativo){errEl.textContent='Conta bloqueada. Contate o administrador.';btn.innerHTML='Entrar';btn.disabled=false;return;}
-    // Login via Supabase Auth
-    const email=uData.email||usuario+'@madalena.app';
+    // Monta email a partir do usuário
+    const email=usuario+'@madalena.app';
+    // Autentica via Supabase Auth
     const{data,error}=await sb.auth.signInWithPassword({email,password:senha});
     if(error){errEl.textContent='Usuário ou senha incorretos.';btn.innerHTML='Entrar';btn.disabled=false;return;}
+    // Busca dados do usuário (agora autenticado, RLS libera)
+    const uid=data.session.user.id;
+    const{data:uData}=await sb.from('usuarios').select('id,usuario,nome,email,role,ativo').eq('id',uid).single();
+    if(!uData||!uData.ativo){
+      await sb.auth.signOut();
+      errEl.textContent='Conta bloqueada. Contate o administrador.';btn.innerHTML='Entrar';btn.disabled=false;return;
+    }
     _currentUser={...uData,token:data.session.access_token};
     hideAuthScreen();
     document.getElementById('login-pass').value='';
