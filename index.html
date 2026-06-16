@@ -1754,9 +1754,57 @@ async function renderUsersList(){
         <div style="font-size:11px;color:var(--txt3)">@${u.usuario}${u.email?' · '+u.email:''} · Último login: ${lastLogin}</div>
       </div>
       <span class="user-badge ${badgeCls}">${badgeTxt}</span>
+      <button class="btn" style="padding:3px 8px;font-size:12px;" onclick="abrirEditarUsuario('${u.id}','${u.nome.replace(/'/g,"\\'")}','${u.usuario}','${u.email||''}')"><i class="ti ti-pencil" style="font-size:12px"></i></button>
       ${!isMe&&u.role!=='master'?`<button class="btn" style="padding:3px 8px;font-size:12px;color:${u.ativo?'#E24B4A':'#1D9E75'};border-color:${u.ativo?'#F09595':'#1D9E75'};" onclick="toggleUserAtivo('${u.id}',${u.ativo})">${u.ativo?'Bloquear':'Ativar'}</button>`:''}`;
     el.appendChild(row);
   });
+}
+
+function abrirEditarUsuario(id,nome,usuario,email){
+  // Remove modal anterior se existir
+  const old=document.getElementById('edit-user-modal');if(old)old.remove();
+  const m=document.createElement('div');
+  m.id='edit-user-modal';
+  m.style.cssText='position:fixed;inset:0;z-index:700;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)';
+  m.innerHTML=`
+    <div style="position:absolute;inset:0" onclick="fecharEditarUsuario()"></div>
+    <div class="modal" style="width:400px;position:relative;z-index:1">
+      <div class="modal-title">
+        <span><i class="ti ti-pencil" style="font-size:14px;vertical-align:-2px;margin-right:6px"></i>Editar usuário</span>
+        <button class="btn" style="padding:4px 8px" onclick="fecharEditarUsuario()"><i class="ti ti-x" style="font-size:14px"></i></button>
+      </div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+        <div><div class="mlabel">Nome de exibição</div><input id="eu-nome" class="inp" style="width:100%" value="${nome}"></div>
+        <div><div class="mlabel">Usuário (login)</div><input id="eu-usuario" class="inp" style="width:100%" value="${usuario}"></div>
+        <div><div class="mlabel">E-mail</div><input id="eu-email" class="inp" style="width:100%" value="${email}" placeholder="opcional"></div>
+        <div><div class="mlabel">Nova senha <span style="color:var(--txt3);font-weight:400">(deixe vazio para manter)</span></div><input id="eu-senha" class="inp" style="width:100%" type="password" placeholder="••••••••"></div>
+        <div id="eu-error" style="font-size:12px;color:#E24B4A;min-height:16px"></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px">
+          <button class="btn" onclick="fecharEditarUsuario()">Cancelar</button>
+          <button class="btn btn-primary" onclick="salvarEdicaoUsuario('${id}')">Salvar</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(m);
+}
+function fecharEditarUsuario(){const m=document.getElementById('edit-user-modal');if(m)m.remove();}
+async function salvarEdicaoUsuario(uid){
+  const nome=document.getElementById('eu-nome').value.trim();
+  const usuario=document.getElementById('eu-usuario').value.trim().toLowerCase();
+  const email=document.getElementById('eu-email').value.trim()||null;
+  const senha=document.getElementById('eu-senha').value;
+  const errEl=document.getElementById('eu-error');
+  if(!nome||!usuario){errEl.textContent='Nome e usuário são obrigatórios.';return;}
+  if(senha&&senha.length<6){errEl.textContent='Senha deve ter pelo menos 6 caracteres.';return;}
+  const updates={nome,usuario,email};
+  if(senha){
+    const{error}=await sb.rpc('atualizar_senha_usuario',{p_id:uid,p_senha:senha});
+    if(error){errEl.textContent='Erro ao atualizar senha.';return;}
+  }
+  const{error}=await sb.from('usuarios').update(updates).eq('id',uid);
+  if(error){errEl.textContent='Erro ao salvar alterações.';return;}
+  fecharEditarUsuario();
+  await renderUsersList();
 }
 
 async function toggleUserAtivo(uid,ativo){
@@ -1985,6 +2033,9 @@ window.deleteSpace = deleteSpace;
 window.openNewSpaceModal = openNewSpaceModal;
 window.closeSpaceModal = closeSpaceModal;
 window.saveSpace = saveSpace;
+window.abrirEditarUsuario = abrirEditarUsuario;
+window.fecharEditarUsuario = fecharEditarUsuario;
+window.salvarEdicaoUsuario = salvarEdicaoUsuario;
 </script>
 </body>
 </html>
