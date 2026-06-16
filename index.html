@@ -41,7 +41,6 @@ body{background:var(--bg1);color:var(--txt1)}
 .space-children.collapsed{max-height:0!important;opacity:0;pointer-events:none}
 .sp-chevron{color:var(--txt3);font-size:12px;flex-shrink:0;transition:transform .2s;margin-left:auto}
 .sb-item.sp-collapsed .sp-chevron{transform:rotate(-90deg)}
-.sb-item:hover .sp-del-btn{opacity:1!important}
 .list-item{display:flex;align-items:center;gap:6px;padding:4px 8px 4px 14px;font-size:12px;color:var(--txt2);cursor:pointer;border-radius:0 5px 5px 0;margin:1px 6px 1px 0;transition:background .1s,color .1s}
 .list-item:hover{background:var(--bg3);color:var(--txt1)}
 .list-item.active{background:var(--accent-bg);color:var(--accent);font-weight:500}
@@ -255,7 +254,7 @@ body.dark .timer-badge.running{background:#085041;color:#7DDAB8;border-color:#1D
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 /* ── AUTH ── */
-#auth-screen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--bg1)}
+#auth-screen{display:none !important}
 #auth-screen.hidden{display:none}
 .auth-card{width:380px;max-width:95vw;padding:36px 32px;border:1px solid var(--bdr);border-radius:20px;background:var(--bg1);box-shadow:0 8px 40px rgba(0,0,0,.12)}
 .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;justify-content:center}
@@ -683,31 +682,40 @@ const SL={todo:'A fazer',progress:'Em progresso',done:'Concluído'};
 const SI={todo:'ti-circle',progress:'ti-loader',done:'ti-circle-check'};
 const SC={todo:'s-todo',progress:'s-prog',done:'s-done'};
 const DEF_SPACES=[
-  {id:'work',label:'Trabalho',color:'#378ADD',lists:[{id:'work-g',label:'Geral'}]},
-  {id:'study',label:'Estudos',color:'#1D9E75',lists:[{id:'study-g',label:'Geral'}]},
-  {id:'personal',label:'Pessoal',color:'#D85A30',lists:[{id:'personal-g',label:'Geral'}]}
+  {id:'60bba244-6712-4476-bfad-3a9090680341',label:'Trabalho',color:'#378ADD',lists:[{id:'9bd771b6-8787-44ae-881e-30884923e031',label:'Geral'}]},
+  {id:'2b47c09c-2336-4d6d-b0e6-3927cd192770',label:'Estudos',color:'#1D9E75',lists:[{id:'5c096e4a-3b1f-49c8-b1e9-4b764f465b1f',label:'Geral'}]},
+  {id:'c6766579-6315-4219-bcbe-9a3112f1364d',label:'Pessoal',color:'#D85A30',lists:[{id:'ca43b33b-6898-481a-bc91-c3a07bb1554f',label:'Geral'}]}
 ];
 const DEF_HABITS=[
-  {id:'hh1',name:'Acordar 5h50',freq:'weekdays',days:[0,1,1,1,1,1,0],meta:20,color:'#378ADD'},
-  {id:'hh2',name:'Café proteico',freq:'daily',days:[1,1,1,1,1,1,1],meta:30,color:'#1D9E75'},
-  {id:'hh3',name:'Academia',freq:'custom',days:[0,1,1,0,1,1,0],meta:16,color:'#D85A30'},
-  {id:'hh4',name:'Leitura 10 páginas',freq:'custom',days:[0,1,1,1,1,1,0],meta:20,color:'#D4537E'},
-  {id:'hh5',name:'Seguir AppBlock',freq:'daily',days:[1,1,1,1,1,1,1],meta:30,color:'#7c6fcd'},
-  {id:'hh6',name:'Estudar inglês',freq:'custom',days:[0,1,1,1,1,1,0],meta:20,color:'#639922'},
-  {id:'hh7',name:'100 Days of Code',freq:'custom',days:[0,1,1,1,1,1,0],meta:15,color:'#BA7517'},
+  {id:'e6dbabed-16c8-4f9c-a604-562c5ef72b0a',name:'Acordar 5h50',freq:'weekdays',days:[0,1,1,1,1,1,0],meta:20,color:'#378ADD'},
+  {id:'d254b47e-46ca-4d01-a6b8-e4a92dbdfca5',name:'Café proteico',freq:'daily',days:[1,1,1,1,1,1,1],meta:30,color:'#1D9E75'},
+  {id:'a9a9df02-1f2d-4268-a31b-a89b8a03236e',name:'Academia',freq:'custom',days:[0,1,1,0,1,1,0],meta:16,color:'#D85A30'},
+  {id:'0be06b1b-25aa-46b1-b41a-0a60d3e6bf15',name:'Leitura 10 páginas',freq:'custom',days:[0,1,1,1,1,1,0],meta:20,color:'#D4537E'},
+  {id:'781e01a7-83f3-4c4b-acad-fcd8308ad7f8',name:'Seguir AppBlock',freq:'daily',days:[1,1,1,1,1,1,1],meta:30,color:'#7c6fcd'},
+  {id:'6b851732-5d28-4722-b979-6f4c0fdf5da9',name:'Estudar inglês',freq:'custom',days:[0,1,1,1,1,1,0],meta:20,color:'#639922'},
+  {id:'3c1fbba7-1faa-4010-8839-d729b79f2200',name:'100 Days of Code',freq:'custom',days:[0,1,1,1,1,1,0],meta:15,color:'#BA7517'},
 ];
 
 /* ══════════════════════════════════════
    SUPABASE — configuração
 ══════════════════════════════════════ */
 const SB_URL='https://imgmzjrmtyvpbjamhxek.supabase.co';
-const SB_KEY='sb_publishable_e6g5NC52OuR6XWPC2r6zKA_qegCvsYj';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltZ216anJtdHl2cGJqYW1oeGVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjQwODMsImV4cCI6MjA5NjQ0MDA4M30.hJeNr7hRbjVSXg5Frvi05a7kFISQHacu3utpsABwfOc';
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
 /* preferências de UI ficam no localStorage (leve, instantâneo) */
 const UI_KEY='madalena-ui';
-function loadUI(){try{const r=localStorage.getItem(UI_KEY);return r?JSON.parse(r):{};} catch(e){return {};}}
-function saveUI(patch){try{localStorage.setItem(UI_KEY,JSON.stringify({...loadUI(),...patch}));}catch(e){}}
+const UI_VERSION='v2'; // bump para limpar localStorage antigo
+function loadUI(){
+  try{
+    const r=localStorage.getItem(UI_KEY);
+    if(!r)return {};
+    const parsed=JSON.parse(r);
+    if(parsed._v!==UI_VERSION){localStorage.removeItem(UI_KEY);return {};}
+    return parsed;
+  }catch(e){return {};}
+}
+function saveUI(patch){try{localStorage.setItem(UI_KEY,JSON.stringify({...loadUI(),...patch,_v:UI_VERSION}));}catch(e){}}
 
 const STORAGE_KEY='madalena-v1';
 let S={
@@ -761,15 +769,25 @@ async function loadState(){
 
   showLoadingOverlay(true);
   try{
-    /* 1. Spaces */
-    const spRows=await sbQ('spaces',q=>q.select('*').order('ordem'));
+    /* 1. Spaces + Listas */
+    let spRows=await sbQ('spaces',q=>q.select('*').order('ordem'));
+    if(!spRows.length){
+      /* primeira vez: semeia spaces e listas padrão no Supabase */
+      for(let i=0;i<DEF_SPACES.length;i++){
+        const sp=DEF_SPACES[i];
+        await sbUpsert('spaces',{id:sp.id,nome:sp.label,cor:sp.color,ordem:i,user_id:_currentUser?.id});
+        for(let j=0;j<sp.lists.length;j++){
+          const lst=sp.lists[j];
+          await sbUpsert('listas',{id:lst.id,space_id:sp.id,nome:lst.label,ordem:j});
+        }
+      }
+      spRows=await sbQ('spaces',q=>q.select('*').order('ordem'));
+    }
     S.spaces=[];
     for(const sp of spRows){
-      /* 2. Listas de cada space */
       const lstRows=await sbQ('listas',q=>q.select('*').eq('space_id',sp.id).order('ordem'));
       const lists=lstRows.map(l=>({id:l.id,label:l.nome}));
       S.spaces.push({id:sp.id,label:sp.nome,color:sp.cor,lists});
-      /* mapeia id → id (no Supabase já usamos UUIDs direto) */
     }
     if(!S.spaces.length) S.spaces=JSON.parse(JSON.stringify(DEF_SPACES));
 
@@ -796,13 +814,21 @@ async function loadState(){
     rcRows.forEach(r=>{S.recurringDoneLog[rDoneKey(r.tarefa_recorrente_id,r.data)]=true;});
 
     /* 6. Hábitos */
-    const hRows=await sbQ('habitos',q=>q.select('*').order('criado_em'));
-    if(hRows.length){
-      S.habits=hRows.map(h=>{
-        const{freq,days}=rowToFreq(h);
-        return{id:h.id,name:h.nome,color:h.cor,freq,days,meta:h.meta_mensal};
-      });
+    let hRows=await sbQ('habitos',q=>q.select('*').order('criado_em'));
+    if(!hRows.length){
+      /* primeira vez: semeia os hábitos padrão no Supabase */
+      for(const h of DEF_HABITS){
+        await sbUpsert('habitos',{
+          id:h.id, nome:h.name, cor:h.color, meta_mensal:h.meta,
+          user_id:_currentUser?.id, ...freqToRow(h.freq,h.days)
+        });
+      }
+      hRows=await sbQ('habitos',q=>q.select('*').order('criado_em'));
     }
+    S.habits=hRows.map(h=>{
+      const{freq,days}=rowToFreq(h);
+      return{id:h.id,name:h.nome,color:h.cor,freq,days,meta:h.meta_mensal};
+    });
 
     /* 7. Hábitos concluídos */
     const hcRows=await sbQ('habitos_concluidos',q=>q.select('*'));
@@ -842,11 +868,13 @@ function persistUI(){
 /* Upsert genérico com retry silencioso */
 async function sbUpsert(table,row,conflict='id'){
   const{error}=await sb.from(table).upsert(row,{onConflict:conflict});
-  if(error)console.warn(`[sb] upsert ${table}:`,error.message);
+  if(error)console.error(`[sb] upsert ${table}:`,error.message, row);
+  return !error;
 }
 async function sbDelete(table,id){
   const{error}=await sb.from(table).delete().eq('id',id);
-  if(error)console.warn(`[sb] delete ${table}:`,error.message);
+  if(error)console.error(`[sb] delete ${table}:`,error.message);
+  return !error;
 }
 
 /* persist é chamado por toda ação do usuário */
@@ -857,9 +885,8 @@ async function persist(){
 
 /* ── helpers por entidade ── */
 async function sbSaveSpace(sp,ordem){
-  await sbUpsert('spaces',{id:sp.id,nome:sp.label,cor:sp.color,ordem,user_id:_currentUser?.id||null});
+  await sbUpsert('spaces',{id:sp.id,nome:sp.label,cor:sp.color,ordem,user_id:_currentUser?.id});
 }
-async function sbDeleteSpace(sid){await sbDelete('spaces',sid);}
 async function sbSaveList(lst,spaceId,ordem){
   await sbUpsert('listas',{id:lst.id,space_id:spaceId,nome:lst.label,ordem});
 }
@@ -893,7 +920,7 @@ async function sbToggleRecurDone(tplId,date,isDone){
 async function sbSaveHabit(h){
   await sbUpsert('habitos',{
     id:h.id, nome:h.name, cor:h.color, meta_mensal:h.meta,
-    user_id:_currentUser?.id||null,
+    user_id:_currentUser?.id,
     ...freqToRow(h.freq,h.days)
   });
 }
@@ -1020,8 +1047,7 @@ function renderSidebar(){
       <span class="dot" style="background:${sp.color}"></span>
       <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sp.label}</span>
       <i class="ti ti-chevron-down sp-chevron"></i>
-      <span class="drag-handle" style="margin-left:4px"><i class="ti ti-grip-vertical" style="font-size:13px"></i></span>
-      <button class="list-act-btn sp-del-btn" onclick="deleteSpace('${sp.id}',event)" title="Excluir space" style="opacity:0;margin-left:2px;padding:2px 4px;border-radius:4px"><i class="ti ti-trash" style="font-size:11px;color:#E24B4A"></i></button>`;
+      <span class="drag-handle" style="margin-left:4px"><i class="ti ti-grip-vertical" style="font-size:13px"></i></span>`;
 
     // Clicking the space: if collapsed → expand; if expanded → navigate to space overview
     spItem.addEventListener('click',e=>{
@@ -1087,32 +1113,18 @@ function renderSidebar(){
 }
 function startEditList(lid,e){e.stopPropagation();S.editingList=lid;renderSidebar();}
 function commitListEdit(spId,lid,val){const name=val.trim();if(name){const sp=S.spaces.find(s=>s.id===spId);if(sp){const l=sp.lists.find(l=>l.id===lid);if(l){l.label=name;sbUpsert('listas',{id:lid,space_id:spId,nome:name,ordem:sp.lists.findIndex(x=>x.id===lid)||0});}}}S.editingList=null;persist();renderAll();}
-let _pendingDeleteSpId=null,_pendingDeleteLid=null,_pendingDeleteType=null;
+let _pendingDeleteSpId=null,_pendingDeleteLid=null;
 function deleteList(spId,lid,e){
   e.stopPropagation();
   const sp=S.spaces.find(s=>s.id===spId);if(!sp||sp.lists.length<=1)return;
   const lst=sp.lists.find(l=>l.id===lid);if(!lst)return;
   const taskCount=S.tasks.filter(t=>t.listId===lid).length;
-  _pendingDeleteSpId=spId;_pendingDeleteLid=lid;_pendingDeleteType='list';
-  document.getElementById('confirm-title').textContent=`Excluir lista "${lst.label}"?`;
+  _pendingDeleteSpId=spId;_pendingDeleteLid=lid;
+  document.getElementById('confirm-title').textContent=`Excluir "${lst.label}"?`;
   document.getElementById('confirm-desc').textContent=taskCount>0
     ?`Esta lista contém ${taskCount} tarefa${taskCount!==1?'s':''} que também serão excluídas.`
     :'Esta lista está vazia.';
   document.getElementById('confirm-btn').onclick=confirmDeleteList;
-  document.getElementById('confirm-modal').classList.add('open');
-}
-
-function deleteSpace(sid,e){
-  e.stopPropagation();
-  const sp=S.spaces.find(s=>s.id===sid);if(!sp)return;
-  const allLids=(sp.lists||[]).map(l=>l.id);
-  const taskCount=S.tasks.filter(t=>allLids.includes(t.listId)).length;
-  const listCount=sp.lists.length;
-  _pendingDeleteSpId=sid;_pendingDeleteLid=null;_pendingDeleteType='space';
-  document.getElementById('confirm-title').textContent=`Excluir space "${sp.label}"?`;
-  document.getElementById('confirm-desc').textContent=
-    `Este space contém ${listCount} lista${listCount!==1?'s':''} e ${taskCount} tarefa${taskCount!==1?'s':''} que também serão excluídas.`;
-  document.getElementById('confirm-btn').onclick=confirmDeleteSpace;
   document.getElementById('confirm-modal').classList.add('open');
 }
 function confirmDeleteList(){
@@ -1124,17 +1136,6 @@ function confirmDeleteList(){
   if(S.currentView===lid)sv(sp.lists.length?sp.lists[0].id:sp.id);
   _pendingDeleteSpId=null;_pendingDeleteLid=null;
   closeConfirmModal();persist();sbDeleteList(lid);renderAll();
-}
-function confirmDeleteSpace(){
-  const sid=_pendingDeleteSpId;
-  const sp=S.spaces.find(s=>s.id===sid);if(!sp)return;
-  const allLids=(sp.lists||[]).map(l=>l.id);
-  S.tasks=S.tasks.filter(t=>!allLids.includes(t.listId));
-  S.recurringTemplates=S.recurringTemplates.filter(r=>!allLids.includes(r.listId));
-  S.spaces=S.spaces.filter(s=>s.id!==sid);
-  if(S.currentView===sid||allLids.includes(S.currentView))sv('dashboard');
-  _pendingDeleteSpId=null;_pendingDeleteLid=null;
-  closeConfirmModal();persist();sbDeleteSpace(sid);renderAll();
 }
 function closeConfirmModal(){document.getElementById('confirm-modal').classList.remove('open');}
 function addListToSpace(spId){
@@ -1228,8 +1229,10 @@ function saveHabitEdit(){
   const name=document.getElementById('he-name').value.trim();if(!name)return;
   const meta=parseInt(document.getElementById('he-meta').value)||h.meta;
   h.name=name;h.meta=meta;h.color=_editHabitColor;
-  closeHabitEditModal();persist();sbSaveHabit(h);renderAll();
-}(t,showBadge=true,showOrder=false){
+  closeHabitEditModal();persist();renderAll();
+}
+
+function makeTaskRow(t,showBadge=true,showOrder=false){
   const info=dlInfo(t);const row=document.createElement('div');row.className='task-row'+(info&&info.cls==='dl-overdue'?' overdue':'');
   const badge=showBadge?`<span class="badge" style="${badgeStyle(t.listId)}">${listLabel(t.listId)}</span>`:'';
   const orderBadge=showOrder&&t._order!==undefined?`<span class="prio-badge" style="cursor:default" title="Prioridade ${t._order+1}">${t._order+1}</span>`:'';
@@ -1576,6 +1579,14 @@ function saveOrder(){
   persist();renderAll();closeOrderModal();
 }
 
+function saveHabitEdit(){
+  const h=S.habits.find(h=>h.id===_editHabitId);if(!h)return;
+  const name=document.getElementById('he-name').value.trim();if(!name)return;
+  const meta=parseInt(document.getElementById('he-meta').value)||h.meta;
+  h.name=name;h.meta=meta;h.color=_editHabitColor;
+  closeHabitEditModal();persist();sbSaveHabit(h);renderAll();
+}
+
 /* ══════════════════════════════════════
    AUTENTICAÇÃO
 ══════════════════════════════════════ */
@@ -1658,16 +1669,15 @@ function showAuthScreen(){
 }
 
 async function doLogout(){
-  const token=_currentUser?.token;
-  /* limpa estado local imediatamente — não depende do RPC */
-  clearToken();
-  _currentUser=null;
+  if(_currentUser?.token){
+    await sb.rpc('fazer_logout',{p_token:_currentUser.token}).catch(()=>{});
+  }
+  clearToken();_currentUser=null;
+  /* limpa estado */
   S.tasks=[];S.spaces=JSON.parse(JSON.stringify(DEF_SPACES));
   S.habits=JSON.parse(JSON.stringify(DEF_HABITS));
   S.habitLog={};S.timeLog={};S.recurringTemplates=[];S.recurringDoneLog={};
   showAuthScreen();
-  /* invalida sessão no banco em background */
-  if(token){sb.rpc('fazer_logout',{p_token:token}).catch(()=>{});}
 }
 
 /* ── Gestão de usuários (só master) ── */
@@ -1743,9 +1753,25 @@ document.addEventListener('click',e=>{
 });
 
 /* ══════════════════════════════════════
-   INICIALIZAÇÃO — tenta auto-login
+   INICIALIZAÇÃO — auth silencioso
 ══════════════════════════════════════ */
-tryAutoLogin();
+(async()=>{
+  /* tenta resgatar sessão existente primeiro */
+  let session=null;
+  try{const{data}=await sb.auth.getSession();session=data?.session;}catch(e){}
+  if(!session){
+    /* faz login silencioso com conta master */
+    try{
+      const{data,error}=await sb.auth.signInWithPassword({
+        email:'dev@madalena.app',password:'dev123'
+      });
+      if(!error)session=data.session;
+    }catch(e){console.warn('[auth] silent login failed',e);}
+  }
+  _currentUser={id:'990704e4-07b6-47a7-8114-e98b9649141a',usuario:'dev',nome:'Dev',email:'dev@madalena.app',role:'master',token:session?.access_token||null};
+  updateSidebarProfile();
+  await loadState();
+})();
 
 /* ══════════════════════════════════
    AGENDA — GOOGLE CALENDAR
