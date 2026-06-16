@@ -1777,7 +1777,7 @@ function abrirEditarUsuario(id,nome,usuario,email){
         <div><div class="mlabel">Nome de exibição</div><input id="eu-nome" class="inp" style="width:100%" value="${nome}"></div>
         <div><div class="mlabel">Usuário (login)</div><input id="eu-usuario" class="inp" style="width:100%" value="${usuario}"></div>
         <div><div class="mlabel">E-mail</div><input id="eu-email" class="inp" style="width:100%" value="${email}" placeholder="opcional"></div>
-        <div><div class="mlabel">Nova senha <span style="color:var(--txt3);font-weight:400">(deixe vazio para manter)</span></div><input id="eu-senha" class="inp" style="width:100%" type="password" placeholder="••••••••"></div>
+        <div><div class="mlabel">Nova senha <span style="color:var(--txt3);font-weight:400">(deixe vazio para manter)</span></div><div style="position:relative"><input id="eu-senha" class="inp" style="width:100%;padding-right:36px" type="password" placeholder="••••••••"><button type="button" onclick="const i=document.getElementById('eu-senha');i.type=i.type==='password'?'text':'password';this.querySelector('i').className='ti '+(i.type==='password'?'ti-eye':'ti-eye-off')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--txt3);padding:0"><i class="ti ti-eye" style="font-size:14px"></i></button></div></div>
         <div id="eu-error" style="font-size:12px;color:#E24B4A;min-height:16px"></div>
         <div style="display:flex;justify-content:flex-end;gap:8px">
           <button class="btn" onclick="fecharEditarUsuario()">Cancelar</button>
