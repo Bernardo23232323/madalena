@@ -1650,28 +1650,22 @@ function updateSidebarProfile(){
 }
 
 async function doLogin(){
-  const usuario=document.getElementById('login-user').value.trim();
+  const usuario=document.getElementById('login-user').value.trim().toLowerCase();
   const senha=document.getElementById('login-pass').value;
-  const remember=document.getElementById('login-remember').checked;
   const errEl=document.getElementById('login-error');
   const btn=document.getElementById('login-btn');
   if(!usuario||!senha){errEl.textContent='Preencha usuário e senha.';return;}
   btn.innerHTML='<span class="auth-spinner"></span>Entrando…';btn.disabled=true;errEl.textContent='';
   try{
-    const{data,error}=await sb.rpc('fazer_login',{p_usuario:usuario,p_senha:senha});
-    if(error||!data||!data.length){
-      errEl.textContent='Usuário ou senha incorretos.';
-      btn.innerHTML='Entrar';btn.disabled=false;return;
-    }
-    const row=data[0];
-    _currentUser={id:row.id,usuario:row.usuario,nome:row.nome,email:row.email,role:row.role,token:row.token};
-    /* se "permanecer conectado" → salva no localStorage (persiste); senão → sessionStorage (some ao fechar) */
-    if(remember){
-      localStorage.setItem(SESSION_KEY,row.token);
-    } else {
-      sessionStorage.setItem(SESSION_KEY,row.token);
-      localStorage.removeItem(SESSION_KEY);
-    }
+    // Busca o email do usuário pela tabela usuarios
+    const{data:uData,error:uErr}=await sb.from('usuarios').select('id,usuario,nome,email,role,ativo').eq('usuario',usuario).single();
+    if(uErr||!uData){errEl.textContent='Usuário ou senha incorretos.';btn.innerHTML='Entrar';btn.disabled=false;return;}
+    if(!uData.ativo){errEl.textContent='Conta bloqueada. Contate o administrador.';btn.innerHTML='Entrar';btn.disabled=false;return;}
+    // Login via Supabase Auth
+    const email=uData.email||usuario+'@madalena.app';
+    const{data,error}=await sb.auth.signInWithPassword({email,password:senha});
+    if(error){errEl.textContent='Usuário ou senha incorretos.';btn.innerHTML='Entrar';btn.disabled=false;return;}
+    _currentUser={...uData,token:data.session.access_token};
     hideAuthScreen();
     document.getElementById('login-pass').value='';
     updateSidebarProfile();
@@ -1683,17 +1677,19 @@ async function doLogin(){
 }
 
 async function tryAutoLogin(){
-  const token=getStoredToken();
-  if(!token){showAuthScreen();return;}
   try{
-    const{data,error}=await sb.rpc('validar_sessao',{p_token:token});
-    if(error||!data||!data.length){clearToken();showAuthScreen();return;}
-    const row=data[0];
-    _currentUser={...row,token};
-    hideAuthScreen();
-    updateSidebarProfile();
-    await loadState();
-  }catch(e){showAuthScreen();}
+    const{data}=await sb.auth.getSession();
+    if(data?.session){
+      // Sessão ativa — busca dados do usuário na tabela usuarios
+      const uid=data.session.user.id;
+      const{data:uData}=await sb.from('usuarios').select('id,usuario,nome,email,role').eq('id',uid).single();
+      if(uData){
+        _currentUser={...uData,token:data.session.access_token};
+        hideAuthScreen();updateSidebarProfile();await loadState();return;
+      }
+    }
+  }catch(e){}
+  showAuthScreen();
 }
 
 function showAuthScreen(){
@@ -1851,21 +1847,7 @@ document.addEventListener('click',e=>{
    INICIALIZAÇÃO — auth silencioso
 ══════════════════════════════════════ */
 (async()=>{
-  /* tenta resgatar sessão existente primeiro */
-  let session=null;
-  try{const{data}=await sb.auth.getSession();session=data?.session;}catch(e){}
-  if(!session){
-    /* faz login silencioso com conta master */
-    try{
-      const{data,error}=await sb.auth.signInWithPassword({
-        email:'dev@madalena.app',password:'dev123'
-      });
-      if(!error)session=data.session;
-    }catch(e){console.warn('[auth] silent login failed',e);}
-  }
-  _currentUser={id:'990704e4-07b6-47a7-8114-e98b9649141a',usuario:'dev',nome:'Dev',email:'dev@madalena.app',role:'master',token:session?.access_token||null};
-  updateSidebarProfile();
-  await loadState();
+  await tryAutoLogin();
 })();
 
 /* ══════════════════════════════════
