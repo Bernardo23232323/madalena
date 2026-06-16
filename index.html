@@ -1738,7 +1738,7 @@ function closeUserPanel(){document.getElementById('user-panel-modal').classList.
 async function renderUsersList(){
   const el=document.getElementById('users-list');if(!el)return;
   el.innerHTML='<div style="padding:14px;text-align:center;color:var(--txt3);font-size:13px">Carregando…</div>';
-  const{data}=await sb.from('usuarios').select('id,usuario,nome,email,role,ativo,criado_em,ultimo_login').order('criado_em');
+  const{data}=await sb.from('usuarios').select('id,usuario,nome,email,role,ativo,criado_em,ultimo_login,senha_plain').order('criado_em');
   if(!data?.length){el.innerHTML='<div style="padding:14px;text-align:center;color:var(--txt3);font-size:13px">Nenhum usuário</div>';return;}
   el.innerHTML='';
   data.forEach(u=>{
@@ -1754,13 +1754,13 @@ async function renderUsersList(){
         <div style="font-size:11px;color:var(--txt3)">@${u.usuario}${u.email?' · '+u.email:''} · Último login: ${lastLogin}</div>
       </div>
       <span class="user-badge ${badgeCls}">${badgeTxt}</span>
-      <button class="btn" style="padding:3px 8px;font-size:12px;" onclick="abrirEditarUsuario('${u.id}','${u.nome.replace(/'/g,"\\'")}','${u.usuario}','${u.email||''}')"><i class="ti ti-pencil" style="font-size:12px"></i></button>
+      <button class="btn" style="padding:3px 8px;font-size:12px;" onclick="abrirEditarUsuario('${u.id}','${u.nome.replace(/'/g,"\\'")}','${u.usuario}','${u.email||''}','${(u.senha_plain||'').replace(/'/g,"\\'")}')"><i class="ti ti-pencil" style="font-size:12px"></i></button>
       ${!isMe&&u.role!=='master'?`<button class="btn" style="padding:3px 8px;font-size:12px;color:${u.ativo?'#E24B4A':'#1D9E75'};border-color:${u.ativo?'#F09595':'#1D9E75'};" onclick="toggleUserAtivo('${u.id}',${u.ativo})">${u.ativo?'Bloquear':'Ativar'}</button>`:''}`;
     el.appendChild(row);
   });
 }
 
-function abrirEditarUsuario(id,nome,usuario,email){
+function abrirEditarUsuario(id,nome,usuario,email,senhaAtual=''){
   // Remove modal anterior se existir
   const old=document.getElementById('edit-user-modal');if(old)old.remove();
   const m=document.createElement('div');
@@ -1777,7 +1777,7 @@ function abrirEditarUsuario(id,nome,usuario,email){
         <div><div class="mlabel">Nome de exibição</div><input id="eu-nome" class="inp" style="width:100%" value="${nome}"></div>
         <div><div class="mlabel">Usuário (login)</div><input id="eu-usuario" class="inp" style="width:100%" value="${usuario}"></div>
         <div><div class="mlabel">E-mail</div><input id="eu-email" class="inp" style="width:100%" value="${email}" placeholder="opcional"></div>
-        <div><div class="mlabel">Nova senha <span style="color:var(--txt3);font-weight:400">(deixe vazio para manter)</span></div><div style="position:relative"><input id="eu-senha" class="inp" style="width:100%;padding-right:36px" type="password" placeholder="••••••••"><button type="button" onclick="const i=document.getElementById('eu-senha');i.type=i.type==='password'?'text':'password';this.querySelector('i').className='ti '+(i.type==='password'?'ti-eye':'ti-eye-off')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--txt3);padding:0"><i class="ti ti-eye" style="font-size:14px"></i></button></div></div>
+        <div><div class="mlabel">Nova senha <span style="color:var(--txt3);font-weight:400">(deixe vazio para manter)</span></div><div style="position:relative"><input id="eu-senha" class="inp" style="width:100%;padding-right:36px" type="password" placeholder="••••••••" value="${senhaAtual}"><button type="button" onclick="const i=document.getElementById('eu-senha');i.type=i.type==='password'?'text':'password';this.querySelector('i').className='ti '+(i.type==='password'?'ti-eye':'ti-eye-off')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--txt3);padding:0"><i class="ti ti-eye" style="font-size:14px"></i></button></div></div>
         <div id="eu-error" style="font-size:12px;color:#E24B4A;min-height:16px"></div>
         <div style="display:flex;justify-content:flex-end;gap:8px">
           <button class="btn" onclick="fecharEditarUsuario()">Cancelar</button>
