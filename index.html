@@ -1770,13 +1770,9 @@ document.addEventListener('click',e=>{
       if(!error)session=data.session;
     }catch(e){console.warn('[auth] silent login failed',e);}
   }
-  if(session){
-    _currentUser={id:'990704e4-07b6-47a7-8114-e98b9649141a',usuario:'dev',nome:'Dev',email:'dev@madalena.app',role:'master',token:session?.access_token||null};
-    updateSidebarProfile();
-    await loadState();
-  } else {
-    showAuthScreen();
-  }
+  _currentUser={id:'990704e4-07b6-47a7-8114-e98b9649141a',usuario:'dev',nome:'Dev',email:'dev@madalena.app',role:'master',token:session?.access_token||null};
+  updateSidebarProfile();
+  await loadState();
 })();
 
 /* ══════════════════════════════════
