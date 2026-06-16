@@ -770,18 +770,19 @@ async function loadState(){
   showLoadingOverlay(true);
   try{
     /* 1. Spaces + Listas */
-    let spRows=await sbQ('spaces',q=>q.select('*').order('ordem'));
+    const uid=_currentUser?.id;
+    let spRows=await sbQ('spaces',q=>q.select('*').eq('user_id',uid).order('ordem'));
     if(!spRows.length){
       /* primeira vez: semeia spaces e listas padrão no Supabase */
       for(let i=0;i<DEF_SPACES.length;i++){
         const sp=DEF_SPACES[i];
-        await sbUpsert('spaces',{id:sp.id,nome:sp.label,cor:sp.color,ordem:i,user_id:_currentUser?.id});
+        await sbUpsert('spaces',{id:sp.id,nome:sp.label,cor:sp.color,ordem:i,user_id:uid});
         for(let j=0;j<sp.lists.length;j++){
           const lst=sp.lists[j];
           await sbUpsert('listas',{id:lst.id,space_id:sp.id,nome:lst.label,ordem:j});
         }
       }
-      spRows=await sbQ('spaces',q=>q.select('*').order('ordem'));
+      spRows=await sbQ('spaces',q=>q.select('*').eq('user_id',uid).order('ordem'));
     }
     S.spaces=[];
     for(const sp of spRows){
@@ -1672,6 +1673,7 @@ async function doLogout(){
   if(_currentUser?.token){
     await sb.rpc('fazer_logout',{p_token:_currentUser.token}).catch(()=>{});
   }
+  await sb.auth.signOut().catch(()=>{});
   clearToken();_currentUser=null;
   /* limpa estado */
   S.tasks=[];S.spaces=JSON.parse(JSON.stringify(DEF_SPACES));
@@ -1768,9 +1770,13 @@ document.addEventListener('click',e=>{
       if(!error)session=data.session;
     }catch(e){console.warn('[auth] silent login failed',e);}
   }
-  _currentUser={id:'990704e4-07b6-47a7-8114-e98b9649141a',usuario:'dev',nome:'Dev',email:'dev@madalena.app',role:'master',token:session?.access_token||null};
-  updateSidebarProfile();
-  await loadState();
+  if(session){
+    _currentUser={id:'990704e4-07b6-47a7-8114-e98b9649141a',usuario:'dev',nome:'Dev',email:'dev@madalena.app',role:'master',token:session?.access_token||null};
+    updateSidebarProfile();
+    await loadState();
+  } else {
+    showAuthScreen();
+  }
 })();
 
 /* ══════════════════════════════════
@@ -1931,6 +1937,9 @@ loadState();
 window.doLogout = doLogout;
 window.openUserPanel = openUserPanel;
 window.doLogin = doLogin;
+window.criarUsuario = criarUsuario;
+window.toggleUserAtivo = toggleUserAtivo;
+window.closeUserPanel = closeUserPanel;
 </script>
 </body>
 </html>
