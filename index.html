@@ -1040,9 +1040,9 @@ function renderSidebar(){
     spItem.innerHTML=`
       <span class="dot" style="background:${sp.color}"></span>
       <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sp.label}</span>
-      <button class="sp-del-btn list-act-btn" title="Excluir space" style="opacity:0;margin-left:2px" onclick="deleteSpace('${sp.id}',event)"><i class="ti ti-trash" style="font-size:11px"></i></button>
       <i class="ti ti-chevron-down sp-chevron"></i>
-      <span class="drag-handle" style="margin-left:4px"><i class="ti ti-grip-vertical" style="font-size:13px"></i></span>`;
+      <span class="drag-handle" style="margin-left:4px"><i class="ti ti-grip-vertical" style="font-size:13px"></i></span>
+      <button class="sp-del-btn list-act-btn" title="Excluir space" style="opacity:0;margin-left:2px" onclick="deleteSpace('${sp.id}',event)"><i class="ti ti-trash" style="font-size:11px"></i></button>`;
     spItem.addEventListener('mouseenter',()=>{const b=spItem.querySelector('.sp-del-btn');if(b)b.style.opacity='1';});
     spItem.addEventListener('mouseleave',()=>{const b=spItem.querySelector('.sp-del-btn');if(b)b.style.opacity='0';});
 
