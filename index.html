@@ -1715,16 +1715,8 @@ function hideAuthScreen(){
 
 
 async function doLogout(){
-  if(_currentUser?.token){
-    await sb.rpc('fazer_logout',{p_token:_currentUser.token}).catch(()=>{});
-  }
   await sb.auth.signOut().catch(()=>{});
-  clearToken();_currentUser=null;
-  /* limpa estado */
-  S.tasks=[];S.spaces=JSON.parse(JSON.stringify(DEF_SPACES));
-  S.habits=JSON.parse(JSON.stringify(DEF_HABITS));
-  S.habitLog={};S.timeLog={};S.recurringTemplates=[];S.recurringDoneLog={};
-  showAuthScreen();
+  window.location.reload();
 }
 
 /* ── Gestão de usuários (só master) ── */
