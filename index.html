@@ -1592,6 +1592,14 @@ function saveSpace(){
   sbSaveSpace(sp,S.spaces.length-1).then(()=>sbSaveList(sp.lists[0],id,0));
   renderAll();
 }
+function openNewSpaceModal(){
+  document.getElementById('sp-name').value='';
+  document.getElementById('space-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('sp-name').focus(),100);
+}
+function closeSpaceModal(){
+  document.getElementById('space-modal').classList.remove('open');
+}
 
 function renderPomodoroDots(){const el=document.getElementById('pomo-dots');if(!el)return;el.innerHTML='';for(let i=0;i<4;i++){const d=document.createElement('div');d.className='pomo-dot'+(i<S.pomoCycles%4?' done':'');el.appendChild(d);}}
 function updatePomoDisplay(){const m=Math.floor(S.pomoSeconds/60).toString().padStart(2,'0'),s=(S.pomoSeconds%60).toString().padStart(2,'0');const el=document.getElementById('pomo-time');if(el)el.textContent=`${m}:${s}`;}
@@ -1974,6 +1982,9 @@ window.criarUsuario = criarUsuario;
 window.toggleUserAtivo = toggleUserAtivo;
 window.closeUserPanel = closeUserPanel;
 window.deleteSpace = deleteSpace;
+window.openNewSpaceModal = openNewSpaceModal;
+window.closeSpaceModal = closeSpaceModal;
+window.saveSpace = saveSpace;
 </script>
 </body>
 </html>
