@@ -254,7 +254,8 @@ body.dark .timer-badge.running{background:#085041;color:#7DDAB8;border-color:#1D
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 /* ── AUTH ── */
-#auth-screen{display:flex;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;flex-direction:column;background:#000}
+#auth-screen{display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;flex-direction:column;background:#000}
+#auth-screen.visible{display:flex}
 #auth-screen.hidden{display:none}
 .auth-card{width:380px;max-width:95vw;padding:36px 32px;border:1px solid #ffffff18;border-radius:20px;background:#111;box-shadow:0 8px 40px rgba(0,0,0,.5)}
 .auth-made{position:fixed;bottom:20px;left:0;right:0;text-align:center;font-size:11px;color:#ffffff30;letter-spacing:.08em;font-family:'DM Sans',sans-serif;text-transform:uppercase}
@@ -818,16 +819,6 @@ async function loadState(){
 
     /* 6. Hábitos */
     let hRows=await sbQ('habitos',q=>q.select('*').order('criado_em'));
-    if(!hRows.length){
-      /* primeira vez: semeia os hábitos padrão no Supabase */
-      for(const h of DEF_HABITS){
-        await sbUpsert('habitos',{
-          id:h.id, nome:h.name, cor:h.color, meta_mensal:h.meta,
-          user_id:_currentUser?.id, ...freqToRow(h.freq,h.days)
-        });
-      }
-      hRows=await sbQ('habitos',q=>q.select('*').order('criado_em'));
-    }
     S.habits=hRows.map(h=>{
       const{freq,days}=rowToFreq(h);
       return{id:h.id,name:h.nome,color:h.cor,freq,days,meta:h.meta_mensal};
@@ -1641,7 +1632,7 @@ async function doLogin(){
       sessionStorage.setItem(SESSION_KEY,row.token);
       localStorage.removeItem(SESSION_KEY);
     }
-    document.getElementById('auth-screen').classList.add('hidden');
+    hideAuthScreen();
     document.getElementById('login-pass').value='';
     updateSidebarProfile();
     await loadState();
@@ -1659,17 +1650,29 @@ async function tryAutoLogin(){
     if(error||!data||!data.length){clearToken();showAuthScreen();return;}
     const row=data[0];
     _currentUser={...row,token};
-    document.getElementById('auth-screen').classList.add('hidden');
+    hideAuthScreen();
     updateSidebarProfile();
     await loadState();
   }catch(e){showAuthScreen();}
 }
 
 function showAuthScreen(){
-  document.getElementById('auth-screen').classList.remove('hidden');
+  const el=document.getElementById('auth-screen');
+  el.classList.add('visible');
+  el.classList.remove('hidden');
   showLoadingOverlay(false);
   setTimeout(()=>document.getElementById('login-user').focus(),100);
 }
+function hideAuthScreen(){
+  const el=document.getElementById('auth-screen');
+  el.classList.remove('visible');
+  el.classList.add('hidden');
+}
+
+
+
+
+
 
 async function doLogout(){
   if(_currentUser?.token){
