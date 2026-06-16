@@ -1776,7 +1776,7 @@ async function criarUsuario(){
   if(!/^[a-z0-9_]+$/.test(usuario)){errEl.textContent='Usuário: só letras minúsculas, números e _.';return;}
   const{data,error}=await sb.rpc('criar_usuario',{
     p_usuario:usuario,p_senha:senha,p_nome:nome,
-    p_email:email,p_criado_por:_currentUser?.id
+    p_email:email,p_criado_por:null
   });
   if(error){errEl.textContent=error.message.includes('unique')?'Este usuário já existe.':'Erro ao criar conta.';return;}
   document.getElementById('nu-nome').value='';document.getElementById('nu-usuario').value='';
