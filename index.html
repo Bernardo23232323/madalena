@@ -137,12 +137,7 @@ body.dark .dl-soon{background:#0C447C40;color:#B5D4F4;border-color:#378ADD}
 .s-todo{color:#378ADD}.s-prog{color:#BA7517}.s-done{color:#1D9E75}
 
 /* ── POMODORO ── */
-.pomo-time{font-size:52px;font-weight:300;color:var(--txt1);font-variant-numeric:tabular-nums;letter-spacing:-2px;text-align:center;font-family:'DM Serif Display',serif}
-.pomo-label{font-size:12px;color:var(--txt3);margin-top:4px;text-align:center;text-transform:uppercase;letter-spacing:.08em}
-.pomo-dots{display:flex;justify-content:center;gap:6px;margin:12px 0}
-.pomo-dot{width:8px;height:8px;border-radius:50%;background:var(--bg3)}
-.pomo-dot.done{background:#D85A30}
-.pomo-controls{display:flex;justify-content:center;gap:8px;margin-top:8px}
+
 
 /* ── SPACE SUMMARY ── */
 .space-banner{border-radius:14px;padding:22px 26px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:16px;position:relative;overflow:hidden}
@@ -424,18 +419,6 @@ body.dark .timer-badge.running{background:#085041;color:#7DDAB8;border-color:#1D
             <div id="today-tasks" class="task-list"></div>
           </div>
           <div class="card">
-            <div class="section-title">Pomodoro</div>
-            <div style="padding:8px 0">
-              <div class="pomo-time" id="pomo-time">25:00</div>
-              <div class="pomo-label" id="pomo-label">Foco</div>
-              <div class="pomo-dots" id="pomo-dots"></div>
-              <div style="font-size:12px;color:var(--txt3);margin-bottom:6px;text-align:center" id="pomo-task-label">Nenhuma tarefa selecionada</div>
-              <div class="pomo-controls">
-                <button class="btn" id="pomo-btn" onclick="togglePomo()"><i class="ti ti-player-play" style="font-size:14px"></i>Iniciar</button>
-                <button class="btn" onclick="resetPomo()"><i class="ti ti-refresh" style="font-size:14px"></i></button>
-              </div>
-            </div>
-            <div class="divider" style="margin:12px 0"></div>
             <div class="section-title" style="margin-bottom:8px">Progresso por space</div>
             <div id="space-progress"></div>
           </div>
@@ -727,7 +710,7 @@ let S={
   spaces:JSON.parse(JSON.stringify(DEF_SPACES)),
   habits:JSON.parse(JSON.stringify(DEF_HABITS)),
   habitLog:{},timeLog:{},
-  pomoCycles:0,pomoRunning:false,pomoSeconds:25*60,pomoBreak:false,pomoInterval:null,
+  pomoCycles:0,
   dark:true,filter:'today',customFrom:'',customTo:'',
   currentView:'dashboard',listView:{},editingList:null,weekOffset:0,collapsedSpaces:{},
   /* mapa id-local → id-supabase para cada entidade */
@@ -1364,7 +1347,7 @@ function renderDashboard(){
   else{filtered.forEach(t=>ae.appendChild(makeTaskRow(t)));rr.forEach(r=>ae.appendChild(makeRecRow(r.tpl,r.date)));}
   const sp=document.getElementById('space-progress');if(!sp)return;sp.innerHTML='';
   S.spaces.forEach(s=>{const allLids=(s.lists||[]).map(l=>l.id);const st=filtered.filter(t=>allLids.includes(t.listId)),sd=st.filter(t=>t.done).length,spct=st.length?Math.round(sd/st.length*100):0;sp.innerHTML+=`<div class="pbar-wrap"><div class="pbar-label"><span>${s.label}</span><span>${sd}/${st.length}</span></div><div class="pbar"><div class="pfill" style="width:${spct}%;background:${s.color}"></div></div></div>`;});
-  renderPomodoroDots();renderDashHabits();
+  renderDashHabits();
 }
 function renderSpacePages(){const range=getFilterRange();S.spaces.forEach(sp=>{buildFilter('df-sp-'+sp.id);buildFBadge('fb-sp-'+sp.id);renderSpaceSummary(sp);(sp.lists||[]).forEach(lst=>renderListBody(lst,range));});}
 function renderReport(){
@@ -1544,7 +1527,6 @@ function renderAll(){
 
 function toggleTask(id,e){e.stopPropagation();const t=S.tasks.find(t=>t.id===id);if(t){t.done=!t.done;t.status=t.done?'done':'todo';persist();sbSaveTask(t);renderAll();}}
 function deleteTask(id,e){e.stopPropagation();S.tasks=S.tasks.filter(t=>t.id!==id);persist();sbDeleteTask(id);renderAll();}
-function selPomoTask(id,e){e.stopPropagation();const t=S.tasks.find(t=>t.id===id);if(t)document.getElementById('pomo-task-label').textContent=t.title;}
 function toggleRecDone(tplId,date,e){e.stopPropagation();const k=rDoneKey(tplId,date);const wasDone=!!S.recurringDoneLog[k];if(wasDone)delete S.recurringDoneLog[k];else S.recurringDoneLog[k]=true;persist();sbToggleRecurDone(tplId,date,!wasDone);renderAll();}
 function delRec(id,e){e.stopPropagation();S.recurringTemplates=S.recurringTemplates.filter(t=>t.id!==id);persist();sbDeleteRecur(id);renderAll();}
 function toggleHabitCheck(hid,ds,e){if(e)e.stopPropagation();const k=hLogKey(hid,ds);const wasDone=!!S.habitLog[k];if(wasDone)delete S.habitLog[k];else S.habitLog[k]=true;persist();sbToggleHabit(hid,ds,!wasDone);renderAll();}
@@ -1601,10 +1583,7 @@ function closeSpaceModal(){
   document.getElementById('space-modal').classList.remove('open');
 }
 
-function renderPomodoroDots(){const el=document.getElementById('pomo-dots');if(!el)return;el.innerHTML='';for(let i=0;i<4;i++){const d=document.createElement('div');d.className='pomo-dot'+(i<S.pomoCycles%4?' done':'');el.appendChild(d);}}
-function updatePomoDisplay(){const m=Math.floor(S.pomoSeconds/60).toString().padStart(2,'0'),s=(S.pomoSeconds%60).toString().padStart(2,'0');const el=document.getElementById('pomo-time');if(el)el.textContent=`${m}:${s}`;}
-function togglePomo(){if(S.pomoRunning){clearInterval(S.pomoInterval);S.pomoRunning=false;document.getElementById('pomo-btn').innerHTML='<i class="ti ti-player-play" style="font-size:14px"></i>Retomar';}else{S.pomoRunning=true;document.getElementById('pomo-btn').innerHTML='<i class="ti ti-player-pause" style="font-size:14px"></i>Pausar';S.pomoInterval=setInterval(()=>{S.pomoSeconds--;if(S.pomoSeconds<=0){clearInterval(S.pomoInterval);S.pomoRunning=false;if(!S.pomoBreak){S.pomoCycles++;S.pomoBreak=true;S.pomoSeconds=5*60;document.getElementById('pomo-label').textContent='Pausa';document.getElementById('pomo-btn').innerHTML='<i class="ti ti-player-play" style="font-size:14px"></i>Pausa';sbLogPomodoro('foco',25);}else{S.pomoBreak=false;S.pomoSeconds=25*60;document.getElementById('pomo-label').textContent='Foco';document.getElementById('pomo-btn').innerHTML='<i class="ti ti-player-play" style="font-size:14px"></i>Iniciar';sbLogPomodoro('pausa',5);}persistUI();renderPomodoroDots();}updatePomoDisplay();},1000);}}
-function resetPomo(){clearInterval(S.pomoInterval);S.pomoRunning=false;S.pomoBreak=false;S.pomoSeconds=25*60;document.getElementById('pomo-label').textContent='Foco';document.getElementById('pomo-btn').innerHTML='<i class="ti ti-player-play" style="font-size:14px"></i>Iniciar';updatePomoDisplay();}
+
 
 function sv(view){S.currentView=view;persistUI();renderAll();if(view==='dashboard')loadAgenda();}
 
